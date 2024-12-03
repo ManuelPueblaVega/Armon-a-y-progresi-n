@@ -1,0 +1,1004 @@
+<html><head><base href="." /></head>
+<style>
+.harmony-grid {
+  display: grid;
+  grid-template-columns: 120px repeat(7, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 20px;
+  font-family: Arial, sans-serif;
+  min-width: 900px;
+  overflow-x: auto;
+}
+
+.cell {
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: center;
+  min-width: 100px;
+  height: auto;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  flex-direction: column; /* Stack items vertically */
+  gap: 5px; /* Add space between degree and chord */
+  position: relative; /* Add position relative */
+}
+
+.label {
+  font-weight: bold;
+  background: #e0e0e0;
+}
+
+select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 80px;
+  padding: 5px;
+}
+
+.controls {
+  margin: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #45a049;
+}
+
+.mode-switch {
+  margin: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mode-switch div {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.mode-switch label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 250px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  padding: 5px;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -125px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+.key-selector {
+  margin: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.key-selector select {
+  width: auto;
+  min-width: 100px;
+}
+
+.chord-display {
+  font-weight: bold;
+  color: #2196F3;
+  margin-top: 5px;
+  font-size: 0.9em;
+  border-top: 1px solid #e0e0e0; /* Add a subtle separator line */
+}
+
+select.degree {
+  width: auto;
+  min-width: 60px;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.invalid-combination {
+  color: #ff0000;
+  font-size: 0.8em;
+  margin-top: 5px;
+}
+
+.chord-display.invalid {
+  color: #ff0000;
+  font-weight: bold;
+}
+
+.play-button {
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.play-button:hover {
+  background: #1976D2;
+}
+
+#playSequence {
+  background: #2196F3;
+}
+
+#playSequence:hover {
+  background: #1976D2;
+}
+</style>
+
+<body>
+<div class="key-selector">
+  <label>Tonalidad:</label>
+  <select id="keySelect">
+    <option value="C">Do (C)</option>
+    <option value="G">Sol (G)</option>
+    <option value="D">Re (D)</option>
+    <option value="A">La (A)</option>
+    <option value="E">Mi (E)</option>
+    <option value="B">Si (B)</option>
+    <option value="F">Fa (F)</option>
+    <option value="Bb">Sib (Bb)</option>
+    <option value="Eb">Mib (Eb)</option>
+    <option value="Ab">Lab (Ab)</option>
+    <option value="Db">Reb (Db)</option>
+    <option value="Gb">Solb (Gb)</option>
+  </select>
+</div>
+
+<div class="mode-switch">
+  <div>
+    <label>
+      <input type="radio" name="mode" value="major" checked> Mayor (Jónico)
+    </label>
+    <label>
+      <input type="radio" name="mode" value="dorian"> Dórico
+    </label>
+    <label>
+      <input type="radio" name="mode" value="phrygian"> Frigio
+    </label>
+    <label>
+      <input type="radio" name="mode" value="lydian"> Lidio
+    </label>
+  </div>
+  <div>
+    <label>
+      <input type="radio" name="mode" value="mixolydian"> Mixolidio
+    </label>
+    <label>
+      <input type="radio" name="mode" value="minor"> Menor (Eolio)
+    </label>
+    <label>
+      <input type="radio" name="mode" value="locrian"> Locrio
+    </label>
+    <label>
+      <input type="radio" name="mode" value="dark"> Dark
+    </label>
+  </div>
+</div>
+
+<div class="harmony-grid">
+  <div class="cell label">Grados</div>
+  <div class="cell">
+    <select class="degree">
+      <option value="I" selected>I</option>
+      <option value="ii">ii</option>
+      <option value="iii">iii</option>
+      <option value="IV">IV</option>
+      <option value="V">V</option>
+      <option value="vi">vi</option>
+      <option value="viio">vii°</option>
+    </select>
+    <div class="chord-display" id="chord0"></div>
+  </div>
+  <div class="cell">
+    <select class="degree">
+      <option value="I" selected>I</option>
+      <option value="ii">ii</option>
+      <option value="iii">iii</option>
+      <option value="IV">IV</option>
+      <option value="V">V</option>
+      <option value="vi">vi</option>
+      <option value="viio">vii°</option>
+    </select>
+    <div class="chord-display" id="chord1"></div>
+  </div>
+  <div class="cell">
+    <select class="degree">
+      <option value="IV" selected>IV</option>
+      <option value="I">I</option>
+      <option value="ii">ii</option>
+      <option value="iii">iii</option>
+      <option value="V">V</option>
+      <option value="vi">vi</option>
+      <option value="viio">vii°</option>
+    </select>
+    <div class="chord-display" id="chord2"></div>
+  </div>
+  <div class="cell">
+    <select class="degree">
+      <option value="V" selected>V</option>
+      <option value="I">I</option>
+      <option value="ii">ii</option>
+      <option value="iii">iii</option>
+      <option value="IV">IV</option>
+      <option value="vi">vi</option>
+      <option value="viio">vii°</option>
+    </select>
+    <div class="chord-display" id="chord3"></div>
+  </div>
+  <div class="cell">
+    <select class="degree">
+      <option value="IV" selected>IV</option>
+      <option value="I">I</option>
+      <option value="ii">ii</option>
+      <option value="iii">iii</option>
+      <option value="V">V</option>
+      <option value="vi">vi</option>
+      <option value="viio">vii°</option>
+    </select>
+    <div class="chord-display" id="chord4"></div>
+  </div>
+  <div class="cell">
+    <select class="degree">
+      <option value="V" selected>V</option>
+      <option value="I">I</option>
+      <option value="ii">ii</option>
+      <option value="iii">iii</option>
+      <option value="IV">IV</option>
+      <option value="vi">vi</option>
+      <option value="viio">vii°</option>
+    </select>
+    <div class="chord-display" id="chord5"></div>
+  </div>
+  <div class="cell">
+    <select class="degree">
+      <option value="I" selected>I</option>
+      <option value="ii">ii</option>
+      <option value="iii">iii</option>
+      <option value="IV">IV</option>
+      <option value="V">V</option>
+      <option value="vi">vi</option>
+      <option value="viio">vii°</option>
+    </select>
+    <div class="chord-display" id="chord6"></div>
+  </div>
+
+  <div class="cell label tooltip">
+    Sustitución Diatónica
+    <span class="tooltiptext">Sustitutos basados en función armónica similar y notas comunes</span>
+  </div>
+  <div class="cell">
+    <select class="diatonic">
+      <option value="">-</option>
+      <option value="vi">vi (función tónica)</option>
+      <option value="iii">iii (función tónica)</option>
+      <option value="I">I</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="diatonic">
+      <option value="">-</option>
+      <option value="vi">vi (función tónica)</option>
+      <option value="iii">iii (función tónica)</option>
+      <option value="I">I</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="diatonic">
+      <option value="">-</option>
+      <option value="ii">ii (función subdominante)</option>
+      <option value="vi">vi</option>
+      <option value="IV">IV</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="diatonic">
+      <option value="">-</option>
+      <option value="viio">vii° (función dominante)</option>
+      <option value="iii">iii</option>
+      <option value="V">V</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="diatonic">
+      <option value="">-</option>
+      <option value="ii">ii (función subdominante)</option>
+      <option value="vi">vi</option>
+      <option value="IV">IV</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="diatonic">
+      <option value="">-</option>
+      <option value="viio">vii° (función dominante)</option>
+      <option value="iii">iii</option>
+      <option value="V">V</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="diatonic">
+      <option value="">-</option>
+      <option value="vi">vi (función tónica)</option>
+      <option value="iii">iii (función tónica)</option>
+      <option value="I">I</option>
+    </select>
+  </div>
+
+  <div class="cell label tooltip">
+    Intercambio Modal
+    <span class="tooltiptext">Acordes prestados de otros modos para agregar color y emoción</span>
+  </div>
+  <div class="cell">
+    <select class="modal">
+      <option value="">-</option>
+      <option value="iv">iv (menor)</option>
+      <option value="bVI">bVI (menor)</option>
+      <option value="bVII">bVII (menor)</option>
+      <option value="iidim">ii° (menor)</option>
+      <option value="bIII">bIII (menor)</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="modal">
+      <option value="">-</option>
+      <option value="iv">iv (menor)</option>
+      <option value="bVI">bVI (menor)</option>
+      <option value="bVII">bVII (menor)</option>
+      <option value="iidim">ii° (menor)</option>
+      <option value="bIII">bIII (menor)</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="modal">
+      <option value="">-</option>
+      <option value="iv">iv (menor)</option>
+      <option value="bVI">bVI (menor)</option>
+      <option value="bVII">bVII (menor)</option>
+      <option value="iidim">ii° (menor)</option>
+      <option value="bIII">bIII (menor)</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="modal">
+      <option value="">-</option>
+      <option value="iv">iv (menor)</option>
+      <option value="bVI">bVI (menor)</option>
+      <option value="bVII">bVII (menor)</option>
+      <option value="iidim">ii° (menor)</option>
+      <option value="bIII">bIII (menor)</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="modal">
+      <option value="">-</option>
+      <option value="iv">iv (menor)</option>
+      <option value="bVI">bVI (menor)</option>
+      <option value="bVII">bVII (menor)</option>
+      <option value="iidim">ii° (menor)</option>
+      <option value="bIII">bIII (menor)</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="modal">
+      <option value="">-</option>
+      <option value="iv">iv (menor)</option>
+      <option value="bVI">bVI (menor)</option>
+      <option value="bVII">bVII (menor)</option>
+      <option value="iidim">ii° (menor)</option>
+      <option value="bIII">bIII (menor)</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="modal">
+      <option value="">-</option>
+      <option value="iv">iv (menor)</option>
+      <option value="bVI">bVI (menor)</option>
+      <option value="bVII">bVII (menor)</option>
+      <option value="iidim">ii° (menor)</option>
+      <option value="bIII">bIII (menor)</option>
+    </select>
+  </div>
+
+  <div class="cell label">Séptima</div>
+  <div class="cell">
+    <select class="seventh">
+      <option value="">-</option>
+      <option value="maj7">maj7</option>
+      <option value="7">7</option>
+      <option value="m7">m7</option>
+      <option value="m7b5">m7b5</option>
+    </select>
+  </div>
+  <div class="cell"><select class="seventh"></select></div>
+  <div class="cell"><select class="seventh"></select></div>
+  <div class="cell"><select class="seventh"></select></div>
+  <div class="cell"><select class="seventh"></select></div>
+  <div class="cell"><select class="seventh"></select></div>
+  <div class="cell"><select class="seventh"></select></div>
+
+  <div class="cell label tooltip">
+    Inversiones
+    <span class="tooltiptext">Cambio de la nota del bajo para crear movimientos más fluidos entre acordes</span>
+  </div>
+  <div class="cell">
+    <select class="inversion">
+      <option value="">-</option>
+      <option value="root">Posición Fundamental</option>
+      <option value="first">Primera Inversión</option>
+      <option value="second">Segunda Inversión</option>
+    </select>
+  </div>
+  <div class="cell">
+    <select class="inversion"></select>
+  </div>
+  <div class="cell">
+    <select class="inversion"></select>
+  </div>
+  <div class="cell">
+    <select class="inversion"></select>
+  </div>
+  <div class="cell">
+    <select class="inversion"></select>
+  </div>
+  <div class="cell">
+    <select class="inversion"></select>
+  </div>
+  <div class="cell">
+    <select class="inversion"></select>
+  </div>
+
+</div>
+
+<div class="controls">
+  <button id="export">Exportar Progresión</button>
+  <button id="reset">Resetear</button>
+  <button id="playSequence">Reproducir Secuencia</button>
+</div>
+
+<script>
+function initPianoSounds() {
+  // Using Tone.js for piano sounds
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js';
+  document.head.appendChild(script);
+
+  script.onload = () => {
+    window.synth = new Tone.PolySynth(Tone.Synth).toDestination();
+  };
+}
+
+function getChordNotes(chordName) {
+  // Basic chord parsing - returns array of notes in the chord
+  const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  
+  // Split chord name to handle inversions
+  const [baseChord, bassNote] = chordName.split('/');
+  
+  // Check for diminished chord first
+  const isDiminished = baseChord.includes('dim');
+  let rootNote;
+  if (isDiminished) {
+    rootNote = baseChord.split('dim')[0];
+  } else {
+    rootNote = baseChord.split('m')[0].split('7')[0];
+  }
+  
+  let rootIndex = notes.indexOf(rootNote);
+  if (rootIndex === -1) {
+    // Handle flat notes
+    const flatToSharp = {
+      'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'
+    };
+    rootIndex = notes.indexOf(flatToSharp[rootNote] || rootNote);
+  }
+  
+  if (rootIndex === -1) return null;
+  
+  // Set intervals based on chord type
+  let intervals;
+  if (isDiminished) {
+    intervals = [0, 3, 6]; // Root, minor third, diminished fifth
+  } else if (baseChord.includes('m')) {
+    intervals = [0, 3, 7]; // Root, minor third, perfect fifth
+  } else {
+    intervals = [0, 4, 7]; // Root, major third, perfect fifth
+  }
+  
+  // Generate base notes
+  let chordNotes = intervals.map(interval => {
+    const noteIndex = (rootIndex + interval) % 12;
+    return notes[noteIndex];
+  });
+  
+  // Handle inversions with octave adjustments 
+  if (bassNote) {
+    if (bassNote === chordNotes[1]) { // First inversion
+      return [
+        chordNotes[1], // Third in bass
+        chordNotes[2], // Fifth in middle
+        chordNotes[0]  // Root on top
+      ];
+    } else if (bassNote === chordNotes[2]) { // Second inversion
+      return [
+        chordNotes[2], // Fifth in bass
+        chordNotes[0], // Root in middle
+        chordNotes[1]  // Third on top
+      ];
+    }
+  }
+  
+  // Root position without explicit octaves
+  return chordNotes;
+}
+
+// Modificar la función playChord para añadir las octavas solo al momento de tocar
+function playChord(chordNotes, duration = '2n') {
+  if (!window.synth) return;
+  
+  // Add octaves only when playing
+  const notesWithOctaves = chordNotes.map((note, index) => {
+    return note + (index === 0 ? '3' : (index === 1 ? '3' : '3'));
+  });
+  
+  Tone.start();
+  window.synth.triggerAttackRelease(notesWithOctaves, duration);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  initPianoSounds();
+  
+  const selects = document.querySelectorAll('select');
+  selects.forEach(select => {
+    if (select.innerHTML === "") {
+      const firstOfType = document.querySelector(`select.${select.className}`);
+      select.innerHTML = firstOfType.innerHTML;
+    }
+  });
+
+  const romanToIndex = {
+    'I': 0, 'II': 1, 'III': 2, 'IV': 3, 'V': 4, 'VI': 5, 'VII': 6
+  };
+
+  const scaleSteps = {
+    'major': { // Ionian
+      'C': ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
+      'G': ['G', 'A', 'B', 'C', 'D', 'E', 'F#'],
+      'D': ['D', 'E', 'F#', 'G', 'A', 'B', 'C#'],
+      'A': ['A', 'B', 'C#', 'D', 'E', 'F#', 'G#'],
+      'E': ['E', 'F#', 'G#', 'A', 'B', 'C#', 'D#'],
+      'B': ['B', 'C#', 'D#', 'E', 'F#', 'G#', 'A#'],
+      'F': ['F', 'G', 'A', 'Bb', 'C', 'D', 'E'],
+      'Bb': ['Bb', 'C', 'D', 'Eb', 'F', 'G', 'A'],
+      'Eb': ['Eb', 'F', 'G', 'Ab', 'Bb', 'C', 'D'],
+      'Ab': ['Ab', 'Bb', 'C', 'Db', 'Eb', 'F', 'G'],
+      'Db': ['Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb', 'C'],
+      'Gb': ['Gb', 'Ab', 'Bb', 'Cb', 'Db', 'Eb', 'F']
+    },
+    'minor': { // Aeolian
+      'C': ['C', 'D', 'Eb', 'F', 'G', 'Ab', 'Bb'],
+      'G': ['G', 'A', 'Bb', 'C', 'D', 'Eb', 'F'],
+      'D': ['D', 'E', 'F', 'G', 'A', 'Bb', 'C'],
+      'A': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+      'E': ['E', 'F#', 'G', 'A', 'B', 'C', 'D'],
+      'B': ['B', 'C#', 'D', 'E', 'F#', 'G', 'A'],
+      'F': ['F', 'G', 'Ab', 'Bb', 'C', 'Db', 'Eb'],
+      'Bb': ['Bb', 'C', 'Db', 'Eb', 'F', 'Gb', 'Ab'],
+      'Eb': ['Eb', 'F', 'Gb', 'Ab', 'Bb', 'Cb', 'Db'],
+      'Ab': ['Ab', 'Bb', 'Cb', 'Db', 'Eb', 'Fb', 'Gb'],
+      'Db': ['Db', 'Eb', 'Fb', 'Gb', 'Ab', 'Bbb', 'Cb'],
+      'Gb': ['Gb', 'Ab', 'Bbb', 'Cb', 'Db', 'Ebb', 'Fb']
+    },
+    'dorian': {
+      'C': ['C', 'D', 'Eb', 'F', 'G', 'A', 'Bb'],
+      'G': ['G', 'A', 'Bb', 'C', 'D', 'E', 'F'],
+      'D': ['D', 'E', 'F', 'G', 'A', 'B', 'C'],
+      'A': ['A', 'B', 'C', 'D', 'E', 'F#', 'G'],
+      'E': ['E', 'F#', 'G', 'A', 'B', 'C#', 'D'],
+      'B': ['B', 'C#', 'D', 'E', 'F#', 'G#', 'A'],
+      'F': ['F', 'G', 'Ab', 'Bb', 'C', 'D', 'Eb'],
+      'Bb': ['Bb', 'C', 'Db', 'Eb', 'F', 'G', 'Ab'],
+      'Eb': ['Eb', 'F', 'Gb', 'Ab', 'Bb', 'C', 'Db'],
+      'Ab': ['Ab', 'Bb', 'Cb', 'Db', 'Eb', 'F', 'Gb'],
+      'Db': ['Db', 'Eb', 'Fb', 'Gb', 'Ab', 'Bb', 'Cb'],
+      'Gb': ['Gb', 'Ab', 'Bbb', 'Cb', 'Db', 'Eb', 'Fb']
+    },
+    'phrygian': {
+      'C': ['C', 'Db', 'Eb', 'F', 'G', 'Ab', 'Bb'],
+      'G': ['G', 'Ab', 'Bb', 'C', 'D', 'Eb', 'F'],
+      'D': ['D', 'Eb', 'F', 'G', 'A', 'Bb', 'C'],
+      'A': ['A', 'Bb', 'C', 'D', 'E', 'F', 'G'],
+      'E': ['E', 'F', 'G', 'A', 'B', 'C', 'D'],
+      'B': ['B', 'C', 'D', 'E', 'F#', 'G', 'A'],
+      'F': ['F', 'Gb', 'Ab', 'Bb', 'C', 'Db', 'Eb'],
+      'Bb': ['Bb', 'Cb', 'Db', 'Eb', 'F', 'Gb', 'Ab'],
+      'Eb': ['Eb', 'Fb', 'Gb', 'Ab', 'Bb', 'Cb', 'Db'],
+      'Ab': ['Ab', 'Bbb', 'Cb', 'Db', 'Eb', 'Fb', 'Gb'],
+      'Db': ['Db', 'Ebb', 'Fb', 'Gb', 'Ab', 'Bbb', 'Cb'],
+      'Gb': ['Gb', 'Abb', 'Bbb', 'Cb', 'Db', 'Ebb', 'Fb']
+    },
+    'lydian': {
+      'C': ['C', 'D', 'E', 'F#', 'G', 'A', 'B'],
+      'G': ['G', 'A', 'B', 'C#', 'D', 'E', 'F#'],
+      'D': ['D', 'E', 'F#', 'G#', 'A', 'B', 'C#'],
+      'A': ['A', 'B', 'C#', 'D#', 'E', 'F#', 'G#'],
+      'E': ['E', 'F#', 'G#', 'A#', 'B', 'C#', 'D#'],
+      'B': ['B', 'C#', 'D#', 'E#', 'F#', 'G#', 'A#'],
+      'F': ['F', 'G', 'A', 'B', 'C', 'D', 'E'],
+      'Bb': ['Bb', 'C', 'D', 'E', 'F', 'G', 'A'],
+      'Eb': ['Eb', 'F', 'G', 'A', 'Bb', 'C', 'D'],
+      'Ab': ['Ab', 'Bb', 'C', 'D', 'Eb', 'F', 'G'],
+      'Db': ['Db', 'Eb', 'F', 'G', 'Ab', 'Bb', 'C'],
+      'Gb': ['Gb', 'Ab', 'Bb', 'C', 'Db', 'Eb', 'F']
+    },
+    'mixolydian': {
+      'C': ['C', 'D', 'E', 'F', 'G', 'A', 'Bb'],
+      'G': ['G', 'A', 'B', 'C', 'D', 'E', 'F'],
+      'D': ['D', 'E', 'F#', 'G', 'A', 'B', 'C'],
+      'A': ['A', 'B', 'C#', 'D', 'E', 'F#', 'G'],
+      'E': ['E', 'F#', 'G#', 'A', 'B', 'C#', 'D'],
+      'B': ['B', 'C#', 'D#', 'E', 'F#', 'G#', 'A'],
+      'F': ['F', 'G', 'A', 'Bb', 'C', 'D', 'Eb'],
+      'Bb': ['Bb', 'C', 'D', 'Eb', 'F', 'G', 'Ab'],
+      'Eb': ['Eb', 'F', 'G', 'Ab', 'Bb', 'C', 'Db'],
+      'Ab': ['Ab', 'Bb', 'C', 'Db', 'Eb', 'F', 'Gb'],
+      'Db': ['Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb', 'Cb'],
+      'Gb': ['Gb', 'Ab', 'Bb', 'Cb', 'Db', 'Eb', 'Fb']
+    },
+    'locrian': {
+      'C': ['C', 'Db', 'Eb', 'F', 'Gb', 'Ab', 'Bb'],
+      'G': ['G', 'Ab', 'Bb', 'C', 'Db', 'Eb', 'F'],
+      'D': ['D', 'Eb', 'F', 'G', 'Ab', 'Bb', 'C'],
+      'A': ['A', 'Bb', 'C', 'D', 'Eb', 'F', 'G'],
+      'E': ['E', 'F', 'G', 'A', 'Bb', 'C', 'D'],
+      'B': ['B', 'C', 'D', 'E', 'F', 'G', 'A'],
+      'F': ['F', 'Gb', 'Ab', 'Bb', 'Cb', 'Db', 'Eb'],
+      'Bb': ['Bb', 'Cb', 'Db', 'Eb', 'Fb', 'Gb', 'Ab'],
+      'Eb': ['Eb', 'Fb', 'Gb', 'Ab', 'Bbb', 'Cb', 'Db'],
+      'Ab': ['Ab', 'Bbb', 'Cb', 'Db', 'Ebb', 'Fb', 'Gb'],
+      'Db': ['Db', 'Ebb', 'Fb', 'Gb', 'Abb', 'Bbb', 'Cb'],
+      'Gb': ['Gb', 'Abb', 'Bbb', 'Cb', 'Dbb', 'Ebb', 'Fb']
+    }
+  };
+
+  function getChordName(key, degree, mode = 'major') {
+    const scales = scaleSteps[mode] || scaleSteps['major'];
+    const scale = scales[key];
+    
+    if (!scale) return '';
+
+    const degreeNum = degree.toUpperCase().replace('O', '');
+    const index = romanToIndex[degreeNum];
+    
+    if (index === undefined) return '';
+
+    // Determine chord quality based on mode
+    let modifier = '';
+    switch(mode) {
+      case 'major': // Ionian
+        if (degree === degree.toLowerCase()) modifier = 'm';
+        else if (degree.includes('o')) modifier = 'dim';
+        break;
+      case 'dorian':
+        if (index === 0 || index === 3 || index === 4) modifier = 'm';
+        break;
+      case 'phrygian':
+        if (index !== 5) modifier = 'm';
+        if (index === 1) modifier = 'dim';
+        break;
+      case 'lydian':
+        if (index === 2 || index === 6) modifier = 'm';
+        break;
+      case 'mixolydian':
+        if (index === 2 || index === 5) modifier = 'm';
+        break;
+      case 'minor': // Aeolian
+        if (degree === degree.toUpperCase()) modifier = '';
+        else modifier = 'm';
+        break;
+      case 'locrian':
+        if (index === 0) modifier = 'dim';
+        else if (index !== 5) modifier = 'm';
+        break;
+      default:
+        if (degree === degree.toLowerCase()) modifier = 'm';
+        break;
+    }
+
+    // Add modal interchange chord handling
+    if (degree.startsWith('b')) {
+      // Handle flattened chords from minor mode
+      const flatScales = {
+        'C': ['C', 'Db', 'Eb', 'F', 'G', 'Ab', 'Bb'],
+        'G': ['G', 'Ab', 'Bb', 'C', 'D', 'Eb', 'F'],
+        'D': ['D', 'Eb', 'F', 'G', 'A', 'Bb', 'C'],
+        'A': ['A', 'Bb', 'C', 'D', 'E', 'F', 'G'],
+        'E': ['E', 'F#', 'G', 'A', 'B', 'C', 'D'],
+        'B': ['B', 'C#', 'D', 'E', 'F#', 'G', 'A'],
+        'F': ['F', 'Gb', 'Ab', 'Bb', 'C', 'Db', 'Eb'],
+        'Bb': ['Bb', 'C', 'Db', 'Eb', 'F', 'Gb', 'Ab'],
+        'Eb': ['Eb', 'Fb', 'Gb', 'Ab', 'Bb', 'Cb', 'Db'],
+        'Ab': ['Ab', 'Bbb', 'Cb', 'Db', 'Eb', 'Fb', 'Gb'],
+        'Db': ['Db', 'Ebb', 'Fb', 'Gb', 'Ab', 'Bbb', 'Cb'],
+        'Gb': ['Gb', 'Abb', 'Bbb', 'Cb', 'Db', 'Ebb', 'Fb']
+      };
+
+      const romanNumeral = degree.substring(1);
+      const index = romanToIndex[romanNumeral];
+      if (index === undefined) return '';
+
+      const flatScale = flatScales[key];
+      if (!flatScale) return '';
+
+      let chord = flatScale[index];
+      
+      // Add appropriate quality based on the borrowed chord
+      switch(degree) {
+        case 'bII':
+          return chord;
+        case 'bIII':
+        case 'bVI':
+        case 'bVII':
+          return chord;
+        case 'iv':
+          return chord + 'm';
+        case 'iidim':
+          return chord + 'dim';
+        default:
+          return chord;
+      }
+    }
+
+    return scale[index] + modifier;
+  }
+
+  function updateChordDisplays() {
+    const key = document.getElementById('keySelect').value;
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+
+    const degreeSelects = document.querySelectorAll('select.degree');
+    degreeSelects.forEach((select, index) => {
+        const degree = select.value;
+        const diatonicSub = document.querySelectorAll('select.diatonic')[index].value;
+        const modalInt = document.querySelectorAll('select.modal')[index].value;
+        const seventh = document.querySelectorAll('select.seventh')[index].value;
+        const inversion = document.querySelectorAll('select.inversion')[index].value;
+        
+        const chordDisplay = document.getElementById(`chord${index}`);
+        const cell = chordDisplay.parentElement;
+        
+        // Remove existing play button if any
+        const existingButton = cell.querySelector('.play-button');
+        if (existingButton) {
+            existingButton.remove();
+        }
+        
+        chordDisplay.classList.remove('invalid');
+        
+        // Use modal interchange chord if selected, otherwise use degree
+        let chordDegree = modalInt || degree;
+        let chord = getChordName(key, chordDegree, mode);
+        
+        // Add seventh if selected
+        if (seventh) {
+            chord += seventh;
+        }
+        
+        // Add inversion notation if selected
+        if (inversion && chord) {
+            const chordNotes = getChordNotes(chord);
+            if (chordNotes) {
+                switch(inversion) {
+                    case 'first':
+                        chord += '/' + chordNotes[1]; // Add third in bass
+                        break;
+                    case 'second':
+                        chord += '/' + chordNotes[2]; // Add fifth in bass
+                        break;
+                }
+            }
+        }
+        
+        chordDisplay.textContent = chord;
+
+        // Add play button
+        const playButton = document.createElement('button');
+        playButton.className = 'play-button';
+        playButton.innerHTML = '▶';
+        playButton.title = 'Play chord';
+        playButton.onclick = () => {
+            const notes = getChordNotes(chord);
+            if (notes) {
+                playChord(notes);
+            }
+        };
+        cell.appendChild(playButton);
+    });
+}
+
+async function playChordSequence() {
+  const degreeSelects = document.querySelectorAll('select.degree');
+  const key = document.getElementById('keySelect').value;
+  const mode = document.querySelector('input[name="mode"]:checked').value;
+  
+  // Start Tone.js context if not already started
+  await Tone.start();
+  
+  // Play each chord in sequence
+  for(let i = 0; i < degreeSelects.length; i++) {
+    const chordDisplay = document.getElementById(`chord${i}`);
+    const chord = chordDisplay.textContent;
+    const notes = getChordNotes(chord);
+    
+    if(notes) {
+      // Play chord for 1 second
+      playChord(notes, '1n');
+      // Wait 1.2 seconds before playing next chord
+      await new Promise(resolve => setTimeout(resolve, 1200));
+    }
+  }
+}
+
+  // Add event listeners for all selects
+  document.querySelectorAll('select').forEach(select => {
+    select.addEventListener('change', updateChordDisplays);
+  });
+
+  // Add event listeners for radio buttons
+  document.querySelectorAll('input[name="mode"]').forEach(radio => {
+    radio.addEventListener('change', updateChordDisplays);
+  });
+
+  // Add event listener for play sequence button
+  document.getElementById('playSequence').addEventListener('click', playChordSequence);
+
+  // Initial update
+  updateChordDisplays();
+
+  document.getElementById('export').addEventListener('click', function() {
+    const progression = generateProgression();
+    const blob = new Blob([progression], {type: 'text/plain'});
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'progression.txt';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('reset').addEventListener('click', function() {
+    selects.forEach(select => {
+      select.value = "";
+    });
+    document.querySelector('input[value="major"]').checked = true;
+    document.getElementById('keySelect').value = "C";
+    updateChordDisplays();
+  });
+
+  function generateProgression() {
+    let progression = "=== PROGRESIÓN ARMÓNICA ===\n\n";
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    const key = document.getElementById('keySelect').value;
+    
+    // Add header with key and mode info
+    progression += "╔════════════════════════════════════\n";
+    progression += `║ Tonalidad: ${key}\n`;
+    progression += `║ Modo: ${mode}\n`;
+    progression += "╚════════════════════════════════════\n\n";
+
+    // Get all degrees and their corresponding chords
+    const degreeSelects = document.querySelectorAll('select.degree');
+    progression += "Secuencia de acordes:\n";
+    progression += "──────────────────────\n";
+    
+    // Add degrees line
+    progression += "Grados:  ";
+    degreeSelects.forEach((select, i) => {
+        progression += select.value.padEnd(6, ' ');
+        if (i < degreeSelects.length - 1) progression += "| ";
+    });
+    progression += "\n";
+    
+    // Add separator
+    progression += "         ";
+    degreeSelects.forEach((_, i) => {
+        progression += "──────";
+        if (i < degreeSelects.length - 1) progression += "┼ ";
+    });
+    progression += "\n";
+    
+    // Add chords line
+    progression += "Acordes: ";
+    degreeSelects.forEach((_, i) => {
+        const chord = document.getElementById(`chord${i}`).textContent;
+        progression += chord.padEnd(6, ' ');
+        if (i < degreeSelects.length - 1) progression += "| ";
+    });
+    progression += "\n\n";
+
+    // Check modifications (remove the inversions check)
+    const modifications = [];
+    
+    // Check diatonic substitutions
+    const diatonicSubs = Array.from(document.querySelectorAll('select.diatonic'))
+        .map(s => s.value)
+        .filter(v => v !== "");
+    if (diatonicSubs.length > 0) {
+        modifications.push("Sustituciones Diatónicas: " + diatonicSubs.join(", "));
+    }
+
+    // Check modal interchange
+    const modalInt = Array.from(document.querySelectorAll('select.modal'))
+        .map(s => s.value)
+        .filter(v => v !== "");
+    if (modalInt.length > 0) {
+        modifications.push("Intercambio Modal: " + modalInt.join(", "));
+    }
+
+    // Check sevenths
+    const sevenths = Array.from(document.querySelectorAll('select.seventh'))
+        .map(s => s.value)
+        .filter(v => v !== "");
+    if (sevenths.length > 0) {
+        modifications.push("Séptimas: " + sevenths.join(", "));
+    }
+
+    // Add modifications if any exist
+    if (modifications.length > 0) {
+        progression += "Modificaciones:\n";
+        progression += "──────────────\n";
+        modifications.forEach(mod => {
+            progression += `• ${mod}\n`;
+        });
+    }
+
+    return progression;
+  }
+});
+</script>
+
+</body>
+</html>
